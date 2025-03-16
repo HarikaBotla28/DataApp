@@ -35,13 +35,13 @@ categories = df["Category"].unique()
 selected_category = st.selectbox("Select a Category:", categories)
 # (2) Multi-select for Sub-Category based on selected Category
 if selected_category and "Sub-Category" in df.columns:
-    sub_categories = df[df["Category"] == selected_category]["Sub-Category"].dropna().unique()
-    selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories)
+    filtered_sub_categories = df[df["Category"] == selected_category]["Sub-Category"].dropna().unique()
+    selected_sub_categories = st.multiselect("Select Sub-Categories:", options=filtered_sub_categories, key="sub_category_select")
 else:
     selected_sub_categories = []
 
 if selected_sub_categories:
-    filtered_df = df[df["Sub-Category"].isin(selected_sub_categories)]
+    filtered_df = df[(df["Category"] == selected_category) & (df["Sub-Category"].isin(selected_sub_categories))]
     
     # (3) Line chart of sales for selected items
     sales_by_month_filtered = filtered_df.filter(items=['Sales']).groupby(pd.Grouper(freq='M')).sum()
