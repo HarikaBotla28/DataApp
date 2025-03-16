@@ -31,12 +31,45 @@ st.line_chart(sales_by_month, y="Sales")
 
 st.write("## Your additions")
 # (1) Dropdown for Category Selection
-categories = df["Category"].unique()
-selected_category = st.selectbox("Select a Category:", categories)
+if "Category" in df.columns:
+    categories = df["Category"].dropna().unique()
+    selected_category = st.selectbox("Select a Category:", categories, key="category_select")
+else:
+    st.error("Column 'Category' not found in the dataset.")
+    selected_category = None
 
 # (2) Multi-select for Sub-Category based on selected Category
-sub_categories = df[df["Category"] == selected_category]["Sub_Category"].unique()
-selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories)
+if selected_category and "Sub-Category" in df.columns:
+    sub_categories = df[df["Category"] == selected_category]["Sub-Category"].dropna().unique()
+    selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories, key="sub_category_select")
+else:
+    selected_sub_categories = []
 
-st.write("### (4) show three metrics (https://docs.streamlit.io/library/api-reference/data/st.metric) for the selected items in (2): total sales, total profit, and overall profit margin (%)")
-st.write("### (5) use the delta option in the overall profit margin metric to show the difference between the overall average profit margin (all products across all categories)")
+if selected_sub_categories:
+    filtered_df = df[(df["Category"] == selected_category) & (df["Sub-Category"].isin(selected_sub_categories))]
+    
+    # (3) Generate line charts for each selected sub-category
+    for sub_category in selected_sub_categories:
+        sub_filtered_df = filtered_df[filtered_df["Sub-Category"] == sub_category]
+        if not sub_filtered_df.empty:
+            sales_by_month_filtered = sub_filtered_df.resample('M').sum(numeric_only=True)[['Sales']]
+            st.write(f"### Sales Trend for {sub_category}")
+            st.line_chart(sales_by_month_filtered, y="Sales")
+        else:
+            st.warning(f"No sales data available for {sub_category}.")
+    
+    # (4) Metrics: Total Sales, Total Profit, Overall Profit Margin
+    total_sales = filtered_df["Sales"].sum()
+    total_profit = filtered_df["Profit"].sum()
+    profit_margin = (total_profit / total_sales) * 100 if total_sales > 0 else 0
+    
+    # (5) Overall Profit Margin Comparison
+    overall_sales = df["Sales"].sum()
+    overall_profit = df["Profit"].sum()
+    overall_profit_margin = (overall_profit / overall_sales) * 100 if overall_sales > 0 else 0
+    delta_margin = profit_margin - overall_profit_margin
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Sales", f"${total_sales:,.2f}")
+    col2.metric("Total Profit", f"${total_profit:,.2f}")
+    col3.metric("Profit Margin (%)", f"{profit_margin:.2f}%", delta=f"{delta_margin:.2f}%")
