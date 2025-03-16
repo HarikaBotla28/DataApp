@@ -37,6 +37,14 @@ selected_category = st.selectbox("Select a Category:", categories)
 # (2) Multi-select for Sub-Category based on selected Category
 sub_categories = df[df["Category"] == selected_category]["Sub_Category"].unique()
 selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories)
-st.write("### (3) show a line chart of sales for the selected items in (2)")
+if selected_sub_categories:
+    filtered_df = df[df["Sub-Category"].isin(selected_sub_categories)]
+    
+    # (3) Generate line charts for each selected sub-category
+    for sub_category in selected_sub_categories:
+        sub_filtered_df = filtered_df[filtered_df["Sub-Category"] == sub_category]
+        sales_by_month_filtered = sub_filtered_df.filter(items=['Sales']).groupby(pd.Grouper(freq='M')).sum()
+        st.write(f"### Sales Trend for {sub_category}")
+        st.line_chart(sales_by_month_filtered, y="Sales")
 st.write("### (4) show three metrics (https://docs.streamlit.io/library/api-reference/data/st.metric) for the selected items in (2): total sales, total profit, and overall profit margin (%)")
 st.write("### (5) use the delta option in the overall profit margin metric to show the difference between the overall average profit margin (all products across all categories)")
