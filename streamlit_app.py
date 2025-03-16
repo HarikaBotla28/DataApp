@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 st.title("Data App Assignment, on Oct 7th")
 
 st.write("### Input Data and Examples")
-df = pd.read_csv("Superstore_Sales_utf8.csv", parse_dates=True)
+
+# Load dataset
+df = pd.read_csv("Superstore_Sales_utf8.csv", parse_dates=["Order_Date"])  # Ensure Order_Date is parsed correctly
 st.dataframe(df)
 
 # Bar chart without aggregation
@@ -17,7 +19,7 @@ st.dataframe(aggregated_df)
 st.bar_chart(aggregated_df, x="Category", y="Sales", color="#04f")
 
 # Aggregating sales by month
-df["Order_Date"] = pd.to_datetime(df["Order_Date"])
+df["Order_Date"] = pd.to_datetime(df["Order_Date"])  # Ensure correct datetime format
 df.set_index("Order_Date", inplace=True)
 sales_by_month = df.filter(items=['Sales']).groupby(pd.Grouper(freq='M')).sum()
 st.dataframe(sales_by_month)
@@ -30,7 +32,7 @@ categories = df["Category"].unique()
 selected_category = st.selectbox("Select a Category:", categories)
 
 # (2) Multi-select for Sub-Category based on selected Category
-sub_categories = df[df["Category"] == selected_category]["Sub-Category"].unique()
+sub_categories = df[df["Category"] == selected_category]["Sub_Category"].unique()
 selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories)
 
 if selected_sub_categories:
