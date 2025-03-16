@@ -34,8 +34,12 @@ st.write("## Your additions")
 categories = df["Category"].unique()
 selected_category = st.selectbox("Select a Category:", categories)
 # (2) Multi-select for Sub-Category based on selected Category
-sub_categories = df[df["Category"] == selected_category]["Sub_Category"].unique()
-selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories)
+if selected_category and "Sub-Category" in df.columns:
+    sub_categories = df[df["Category"] == selected_category]["Sub-Category"].dropna().unique()
+    selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories)
+else:
+    selected_sub_categories = []
+
 if selected_sub_categories:
     filtered_df = df[df["Sub-Category"].isin(selected_sub_categories)]
     
