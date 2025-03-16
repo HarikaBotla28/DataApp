@@ -17,8 +17,9 @@ st.dataframe(df)
 # Bar chart without aggregation
 st.bar_chart(df, x="Category", y="Sales")
 
-# Aggregated bar chart
-aggregated_df = df.groupby("Category", as_index=False).sum()
+# Aggregated bar chart (sum only numeric columns)
+numeric_cols = df.select_dtypes(include=['number']).columns
+aggregated_df = df.groupby("Category", as_index=False)[numeric_cols].sum()
 st.dataframe(aggregated_df)
 st.bar_chart(aggregated_df, x="Category", y="Sales", color="#04f")
 
