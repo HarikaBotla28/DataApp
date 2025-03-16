@@ -1,40 +1,47 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import math
 
 st.title("Data App Assignment, on Oct 7th")
 
 st.write("### Input Data and Examples")
-df = pd.read_csv("Superstore_Sales_utf8.csv", parse_dates=True)
+
+# Load dataset
+df = pd.read_csv("Superstore_Sales_utf8.csv", parse_dates=["Order_Date"])  # Ensure Order_Date is parsed correctly
+
+# Ensure column names have no leading/trailing spaces
+df.columns = df.columns.str.strip()
+
 st.dataframe(df)
 
-# This bar chart will not have solid bars--but lines--because the detail data is being graphed independently
+# Bar chart without aggregation
 st.bar_chart(df, x="Category", y="Sales")
 
-# Now let's do the same graph where we do the aggregation first in Pandas... (this results in a chart with solid bars)
-st.dataframe(df.groupby("Category").sum())
-# Using as_index=False here preserves the Category as a column.  If we exclude that, Category would become the datafram index and we would need to use x=None to tell bar_chart to use the index
-st.bar_chart(df.groupby("Category", as_index=False).sum(), x="Category", y="Sales", color="#04f")
+# Aggregated bar chart
+aggregated_df = df.groupby("Category", as_index=False).sum()
+st.dataframe(aggregated_df)
+st.bar_chart(aggregated_df, x="Category", y="Sales", color="#04f")
 
-# Aggregating by time
-# Here we ensure Order_Date is in datetime format, then set is as an index to our dataframe
-df["Order_Date"] = pd.to_datetime(df["Order_Date"])
-df.set_index('Order_Date', inplace=True)
-# Here the Grouper is using our newly set index to group by Month ('M')
+# Aggregating sales by month
+df["Order_Date"] = pd.to_datetime(df["Order_Date"], errors='coerce')  # Ensure correct datetime format, handle errors
+df.dropna(subset=["Order_Date"], inplace=True)  # Drop rows with invalid dates
+df.set_index("Order_Date", inplace=True)
 sales_by_month = df.filter(items=['Sales']).groupby(pd.Grouper(freq='M')).sum()
-
 st.dataframe(sales_by_month)
-
-# Here the grouped months are the index and automatically used for the x axis
 st.line_chart(sales_by_month, y="Sales")
 
 st.write("## Your additions")
+
 # (1) Dropdown for Category Selection
-categories = df["Category"].unique()
-selected_category = st.selectbox("Select a Category:", categories)
+if "Category" in df.columns:
+    categories = df["Category"].dropna().unique()
+    selected_category = st.selectbox("Select a Category:", categories, key="category_select")
+else:
+    st.error("Column 'Category' not found in the dataset.")
+    selected_category = None
+
 # (2) Multi-select for Sub-Category based on selected Category
-if selected_category:
+if selected_category and "Sub-Category" in df.columns:
     sub_categories = df[df["Category"] == selected_category]["Sub-Category"].dropna().unique()
     selected_sub_categories = st.multiselect("Select Sub-Categories:", sub_categories, key="sub_category_select")
 else:
